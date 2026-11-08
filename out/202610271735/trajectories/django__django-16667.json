@@ -1,0 +1,661 @@
+{
+ "instance_id": "django__django-16667",
+ "env_notes": [
+  "environment runs in Docker (logicstar/sweb.eval.x86_64.django_1776_django-16667:latest, already local)"
+ ],
+ "prep_seconds": 9.7,
+ "env_mode": "docker",
+ "session_id": "8832acae-535b-4904-8a86-366eee251785",
+ "events_file": "django__django-16667.events.jsonl",
+ "status": "done",
+ "error": null,
+ "approvals": 0,
+ "questions": 0,
+ "agent_seconds": 369.9,
+ "messages": [
+  {
+   "type": "user",
+   "content": "Repository: django/django (mapped folder, a git repo with the code at the commit the issue was filed against).\n\nPython environment: the project and its dependencies are installed in a Docker container, not on this Mac, so host python cannot import the project. Run every python or test command through `./.swe/run '<command>'`; it runs inside the container at /testbed, which is this same folder. Paths differ by tool: your file tools (read_file, edit_file, grep, write_file) use /links/django__django-16667/..., while commands run through `./.swe/run` see the same files as /testbed/... or relative paths. /links does not exist inside the container and /testbed does not exist outside it, so never mix them. Run `./.swe/run` from the folder root. Example: `./.swe/run 'python -m pytest tests/test_x.py -x -q'`. Project test command: `./tests/runtests.py --verbosity 2 --settings=test_sqlite --parallel 1` (append the test files or names you want, and run it through `./.swe/run`).\nScratch scripts: write them with write_file to `/links/django__django-16667/.swe/scratch/<name>.py` (NOT /output/, which the container cannot see) and run them with `./.swe/run 'python .swe/scratch/<name>.py'`. Files in .swe/ are not part of your patch. There is no network.\n\nResolve this issue by editing the source code.\n\n<issue>\nSelectDateWidget can crash with OverflowError.\nDescription\n\t\nGiven a relatively common view like this:\nfrom django import forms\nfrom django.forms import SelectDateWidget\nfrom django.http import HttpResponse\nclass ReproForm(forms.Form):\n\t my_date = forms.DateField(widget=SelectDateWidget())\ndef repro_view(request):\n\t form = ReproForm(request.GET) # for ease of reproducibility\n\t if form.is_valid():\n\t\t return HttpResponse(\"ok\")\n\t else:\n\t\t return HttpResponse(\"not ok\")\n# urls.py\nurlpatterns = [path('repro/', views.repro_view, name='repro')]\nA user can trigger a server crash, reproducible by running locally and visiting \u200bhttp://127.0.0.1:8000/repro/?my_date_day=1&my_date_month=1&my_date_year=1234567821345678, which results in\n[...] - ERROR - django.request: Internal Server Error: /repro/\nTraceback (most recent call last):\n[...]\n File \"[...]/site-packages/django/forms/widgets.py\", line 1160, in value_from_datadict\n\tdate_value = datetime.date(int(y), int(m), int(d))\nOverflowError: signed integer is greater than maximum\nThis can be triggered similarly for a post request.\nThe issue happens as part of the validation logic run in form.is_valid, specifically, when calling the SelectDateWidget.value_from_datadict, where the user-controlled value is converted into a date without guarding against a possible OverflowError.\nSpecifically, y, m and d are user controlled, and the code does this:\n date_value = datetime.date(int(y), int(m), int(d)) \nWhen large integers (larger than sys.maxsize) are supplied to date's constructor it will throw an OverflowError:\n>>> import datetime, sys\n>>> datetime.date(sys.maxsize+1, 3, 4)\nTraceback (most recent call last):\n File \"<stdin>\", line 1, in <module>\nOverflowError: Python int too large to convert to C long\n\n</issue>",
+   "metadata": {
+    "run_depth": "deep",
+    "run_depth_source": "user",
+    "run_depth_reason": "",
+    "run_depth_id": "79906783beb9"
+   }
+  },
+  {
+   "type": "run_depth",
+   "content": "Running Deep.",
+   "metadata": {
+    "run_depth": "deep",
+    "run_depth_source": "user",
+    "run_depth_reason": "",
+    "run_depth_id": "79906783beb9"
+   }
+  },
+  {
+   "type": "agent",
+   "content": "Let me start by understanding the issue and locating the relevant code."
+  },
+  {
+   "type": "tool_call",
+   "content": "read_file",
+   "metadata": {
+    "args": {
+     "file_path": "/links/django__django-16667/django/forms/widgets.py",
+     "offset": 1150,
+     "limit": 30
+    },
+    "tool_call_id": "call_d160f019",
+    "stats": {
+     "tokens_from_cache": 4096,
+     "tokens_prefilled": 6241,
+     "cache_hit_ratio": 0.396,
+     "prompt_tps": 1383.0,
+     "generation_tokens": 119,
+     "generation_tps": 10.0
+    }
+   }
+  },
+  {
+   "type": "tool_call",
+   "content": "ls",
+   "metadata": {
+    "args": {
+     "path": "/links/django__django-16667"
+    },
+    "tool_call_id": "call_7c76698e"
+   }
+  },
+  {
+   "type": "tool_result",
+   "content": "  1151\t        m = data.get(self.month_field % name)\n  1152\t        d = data.get(self.day_field % name)\n  1153\t        if y == m == d == \"\":\n  1154\t            return None\n  1155\t        if y is not None and m is not None and d is not None:\n  1156\t            input_format = get_format(\"DATE_INPUT_FORMATS\")[0]\n  1157\t            input_format = formats.sanitize_strftime_format(input_format)\n  1158\t            try:\n  1159\t                date_value = datetime.date(int(y), int(m), int(d))\n  1160\t   ",
+   "metadata": {
+    "name": "read_file",
+    "tool_call_id": "call_d160f019"
+   }
+  },
+  {
+   "type": "tool_result",
+   "content": "['/links/django__django-16667/.editorconfig', '/links/django__django-16667/.eslintignore', '/links/django__django-16667/.eslintrc', '/links/django__django-16667/.git-blame-ignore-revs', '/links/django__django-16667/.git/', '/links/django__django-16667/.gitattributes', '/links/django__django-16667/.github/', '/links/django__django-16667/.gitignore', '/links/django__django-16667/.pre-commit-config.yaml', '/links/django__django-16667/.readthedocs.yml', '/links/django__django-16667/.swe/', '/links/d",
+   "metadata": {
+    "name": "ls",
+    "tool_call_id": "call_7c76698e"
+   }
+  },
+  {
+   "type": "agent",
+   "content": "Found the issue. Line 1159 catches `ValueError` but not `OverflowError`. Let me also check the broader context and find the relevant test file."
+  },
+  {
+   "type": "tool_call",
+   "content": "read_file",
+   "metadata": {
+    "args": {
+     "file_path": "/links/django__django-16667/django/forms/widgets.py",
+     "limit": 40,
+     "offset": 1135
+    },
+    "tool_call_id": "call_24515c7a",
+    "stats": {
+     "tokens_from_cache": 10240,
+     "tokens_prefilled": 1118,
+     "cache_hit_ratio": 0.902,
+     "prompt_tps": 3704.2,
+     "generation_tokens": 170,
+     "generation_tps": 10.2
+    }
+   }
+  },
+  {
+   "type": "tool_call",
+   "content": "grep",
+   "metadata": {
+    "args": {
+     "pattern": "SelectDateWidget",
+     "path": "/links/django__django-16667/tests",
+     "output_mode": "files_with_matches"
+    },
+    "tool_call_id": "call_4233f366"
+   }
+  },
+  {
+   "type": "tool_result",
+   "content": "  1136\t                escaped = True\n  1137\t            elif char in \"Yy\":\n  1138\t                yield \"year\"\n  1139\t            elif char in \"bEFMmNn\":\n  1140\t                yield \"month\"\n  1141\t            elif char in \"dj\":\n  1142\t                yield \"day\"\n  1143\t\n  1144\t    def id_for_label(self, id_):\n  1145\t        for first_select in self._parse_date_fmt():\n  1146\t            return \"%s_%s\" % (id_, first_select)\n  1147\t        return \"%s_month\" % id_\n  1148\t\n  1149\t    def value_from",
+   "metadata": {
+    "name": "read_file",
+    "tool_call_id": "call_24515c7a"
+   }
+  },
+  {
+   "type": "tool_result",
+   "content": "/links/django__django-16667/tests/forms_tests/field_tests/test_datefield.py\n/links/django__django-16667/tests/forms_tests/widget_tests/test_selectdatewidget.py\n/links/django__django-16667/tests/i18n/forms.py\n/links/django__django-16667/tests/i18n/tests.py\n/links/django__django-16667/tests/model_forms/tests.py",
+   "metadata": {
+    "name": "grep",
+    "tool_call_id": "call_4233f366"
+   }
+  },
+  {
+   "type": "agent",
+   "content": "Now let me write a reproduction script and then apply the fix."
+  },
+  {
+   "type": "tool_call",
+   "content": "write_file",
+   "metadata": {
+    "args": {
+     "file_path": "/links/django__django-16667/.swe/scratch/repro_overflow.py",
+     "content": "\"\"\"Reproduce the OverflowError in SelectDateWidget.value_from_datadict.\"\"\"\nimport os, sys\nos.environ.setdefault('DJANGO_SETTINGS_MODULE', 'test_sqlite')\n\nimport django\ndjango.setup()\n\nfrom django.forms.widgets import SelectDateWidget\n\nwidget = SelectDateWidget()\n\n# This should NOT raise OverflowError\ndata = {\n    'my_date_day': '1',\n    'my_date_month': '1',\n    'my_date_year': '1234567821345678',  # larger than sys.maxsize\n}\n\ntry:\n    result = widget.value_from_datadict(data, {}, 'my_date')\n    print(f\"Result: {result}\")\n    print(\"SUCCESS: No OverflowError raised\")\nexcept OverflowError as e:\n    print(f\"FAILURE: OverflowError raised: {e}\")\n    sys.exit(1)\n"
+    },
+    "tool_call_id": "call_75fee0e4",
+    "stats": {
+     "tokens_from_cache": 10240,
+     "tokens_prefilled": 1999,
+     "cache_hit_ratio": 0.837,
+     "prompt_tps": 5004.6,
+     "generation_tokens": 265,
+     "generation_tps": 8.2
+    }
+   }
+  },
+  {
+   "type": "tool_result",
+   "content": "Updated file /links/django__django-16667/.swe/scratch/repro_overflow.py",
+   "metadata": {
+    "name": "write_file",
+    "tool_call_id": "call_75fee0e4"
+   }
+  },
+  {
+   "type": "tool_call",
+   "content": "execute",
+   "metadata": {
+    "args": {
+     "command": "cd /links/django__django-16667 && ./.swe/run 'python .swe/scratch/repro_overflow.py'"
+    },
+    "tool_call_id": "call_6e707890",
+    "stats": {
+     "tokens_from_cache": 12288,
+     "tokens_prefilled": 257,
+     "cache_hit_ratio": 0.98,
+     "prompt_tps": 14418.3,
+     "generation_tokens": 55,
+     "generation_tps": 7.6
+    }
+   }
+  },
+  {
+   "type": "tool_result",
+   "content": "/bin/sh: line 0: cd: /links/django__django-16667: No such file or directory\n\nExit code: 1\n[Command failed with exit code 1]",
+   "metadata": {
+    "name": "execute",
+    "tool_call_id": "call_6e707890",
+    "output_lines": 4,
+    "output_truncated": false
+   }
+  },
+  {
+   "type": "tool_call",
+   "content": "execute",
+   "metadata": {
+    "args": {
+     "command": "pwd && ls -la .swe/"
+    },
+    "tool_call_id": "call_26518487",
+    "stats": {
+     "tokens_from_cache": 12288,
+     "tokens_prefilled": 373,
+     "cache_hit_ratio": 0.971,
+     "prompt_tps": 13185.5,
+     "generation_tokens": 33,
+     "generation_tps": 5.0
+    }
+   }
+  },
+  {
+   "type": "tool_result",
+   "content": "/Users/eugenetan/git/otto-swebench-runs/work/checkouts/django__django-16667\ntotal 8\ndrwxr-xr-x   6 eugenetan  staff   192  8 Nov 00:59 .\ndrwxr-xr-x  34 eugenetan  staff  1088  8 Nov 00:59 ..\ndrwxr-xr-x   2 eugenetan  staff    64  8 Nov 00:59 req\ndrwxr-xr-x   2 eugenetan  staff    64  8 Nov 00:59 res\n-rwxr-xr-x   1 eugenetan  staff   606  8 Nov 00:59 run\ndrwxr-xr-x   3 eugenetan  staff    96  8 Nov 01:14 scratch\n\n[Command succeeded with exit code 0]",
+   "metadata": {
+    "name": "execute",
+    "tool_call_id": "call_26518487",
+    "output_lines": 10,
+    "output_truncated": false
+   }
+  },
+  {
+   "type": "tool_call",
+   "content": "execute",
+   "metadata": {
+    "args": {
+     "command": "./.swe/run 'python .swe/scratch/repro_overflow.py'"
+    },
+    "tool_call_id": "call_eb26fb88",
+    "stats": {
+     "tokens_from_cache": 12288,
+     "tokens_prefilled": 648,
+     "cache_hit_ratio": 0.95,
+     "prompt_tps": 11837.0,
+     "generation_tokens": 40,
+     "generation_tps": 8.9
+    }
+   }
+  },
+  {
+   "type": "tool_result",
+   "content": "Traceback (most recent call last):\n  File \"/testbed/.swe/scratch/repro_overflow.py\", line 6, in <module>\n    django.setup()\n  File \"/testbed/django/__init__.py\", line 19, in setup\n    configure_logging(settings.LOGGING_CONFIG, settings.LOGGING)\n                      ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/testbed/django/conf/__init__.py\", line 84, in __getattr__\n    self._setup(name)\n  File \"/testbed/django/conf/__init__.py\", line 71, in _setup\n    self._wrapped = Settings(settings_module)\n                    ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/testbed/django/conf/__init__.py\", line 185, in __init__\n    mod = importlib.import_module(self.SETTINGS_MODULE)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/miniconda3/envs/testbed/lib/python3.11/importlib/__init__.py\", line 126, in import_module\n    return _bootstrap._gcd_import(name[level:], package, level)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"<frozen importlib._bootstrap>\", line 1204, in _gcd_import\n  File \"<frozen importlib._bootstrap>\", line 1176, in _find_and_load\n  File \"<frozen importlib._bootstrap>\", line 1140, in _find_and_load_unlocked\nModuleNotFoundError: No module named 'test_sqlite'\n\nExit code: 1\n[Command failed with exit code 1]",
+   "metadata": {
+    "name": "execute",
+    "tool_call_id": "call_eb26fb88",
+    "output_lines": 24,
+    "output_truncated": false
+   }
+  },
+  {
+   "type": "tool_call",
+   "content": "write_file",
+   "metadata": {
+    "args": {
+     "content": "\"\"\"Reproduce the OverflowError in SelectDateWidget.value_from_datadict.\"\"\"\nimport os, sys\nos.environ.setdefault('DJANGO_SETTINGS_MODULE', 'tests.settings')\n\nimport django\ndjango.setup()\n\nfrom django.forms.widgets import SelectDateWidget\n\nwidget = SelectDateWidget()\n\n# This should NOT raise OverflowError\ndata = {\n    'my_date_day': '1',\n    'my_date_month': '1',\n    'my_date_year': '1234567821345678',  # larger than sys.maxsize\n}\n\ntry:\n    result = widget.value_from_datadict(data, {}, 'my_date')\n    print(f\"Result: {result}\")\n    print(\"SUCCESS: No OverflowError raised\")\nexcept OverflowError as e:\n    print(f\"FAILURE: OverflowError raised: {e}\")\n    sys.exit(1)\n",
+     "file_path": "/links/django__django-16667/.swe/scratch/repro_overflow.py"
+    },
+    "tool_call_id": "call_fcb094cc",
+    "stats": {
+     "tokens_from_cache": 12288,
+     "tokens_prefilled": 1072,
+     "cache_hit_ratio": 0.92,
+     "prompt_tps": 10550.4,
+     "generation_tokens": 250,
+     "generation_tps": 7.9
+    }
+   }
+  },
+  {
+   "type": "tool_result",
+   "content": "Cannot write to /links/django__django-16667/.swe/scratch/repro_overflow.py because it already exists. Read and then make an edit, or write to a new path.",
+   "metadata": {
+    "name": "write_file",
+    "tool_call_id": "call_fcb094cc"
+   }
+  },
+  {
+   "type": "tool_call",
+   "content": "edit_file",
+   "metadata": {
+    "args": {
+     "file_path": "/links/django__django-16667/.swe/scratch/repro_overflow.py",
+     "new_string": "os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'tests.settings')",
+     "old_string": "os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'test_sqlite')",
+     "replace_all": false
+    },
+    "tool_call_id": "call_de6ce460",
+    "stats": {
+     "tokens_from_cache": 12288,
+     "tokens_prefilled": 1383,
+     "cache_hit_ratio": 0.899,
+     "prompt_tps": 6442.0,
+     "generation_tokens": 109,
+     "generation_tps": 8.6
+    }
+   }
+  },
+  {
+   "type": "tool_result",
+   "content": "Successfully replaced 1 instance(s) of the string in '/links/django__django-16667/.swe/scratch/repro_overflow.py'",
+   "metadata": {
+    "name": "edit_file",
+    "tool_call_id": "call_de6ce460"
+   }
+  },
+  {
+   "type": "tool_call",
+   "content": "execute",
+   "metadata": {
+    "args": {
+     "command": "./.swe/run 'python .swe/scratch/repro_overflow.py'"
+    },
+    "tool_call_id": "call_2b1316b6",
+    "stats": {
+     "tokens_from_cache": 12288,
+     "tokens_prefilled": 1543,
+     "cache_hit_ratio": 0.888,
+     "prompt_tps": 5296.4,
+     "generation_tokens": 40,
+     "generation_tps": 7.5
+    }
+   }
+  },
+  {
+   "type": "tool_result",
+   "content": "Traceback (most recent call last):\n  File \"/testbed/.swe/scratch/repro_overflow.py\", line 6, in <module>\n    django.setup()\n  File \"/testbed/django/__init__.py\", line 19, in setup\n    configure_logging(settings.LOGGING_CONFIG, settings.LOGGING)\n                      ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/testbed/django/conf/__init__.py\", line 84, in __getattr__\n    self._setup(name)\n  File \"/testbed/django/conf/__init__.py\", line 71, in _setup\n    self._wrapped = Settings(settings_module)\n                    ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/testbed/django/conf/__init__.py\", line 185, in __init__\n    mod = importlib.import_module(self.SETTINGS_MODULE)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/miniconda3/envs/testbed/lib/python3.11/importlib/__init__.py\", line 126, in import_module\n\n\u22ef (3 more lines) \u22ef\n  File \"<frozen importlib._bootstrap>\", line 1176, in _find_and_load\n  File \"<frozen importlib._bootstrap>\", line 1126, in _find_and_load_unlocked\n  File \"<frozen importlib._bootstrap>\", line 241, in _call_with_frames_removed\n  File \"<frozen importlib._bootstrap>\", line 1204, in _gcd_import\n  File \"<frozen importlib._bootstrap>\", line 1176, in _find_and_load\n  File \"<frozen importlib._bootstrap>\", line 1140, in _find_and_load_unlocked\nModuleNotFoundError: No module named 'tests'\n\nExit code: 1\n[Command failed with exit code 1]",
+   "metadata": {
+    "name": "execute",
+    "tool_call_id": "call_2b1316b6",
+    "output_lines": 28,
+    "output_truncated": true
+   }
+  },
+  {
+   "type": "tool_call",
+   "content": "execute",
+   "metadata": {
+    "args": {
+     "command": "./.swe/run 'ls tests/'"
+    },
+    "tool_call_id": "call_f77ad426",
+    "stats": {
+     "tokens_from_cache": 12288,
+     "tokens_prefilled": 2058,
+     "cache_hit_ratio": 0.857,
+     "prompt_tps": 4446.2,
+     "generation_tokens": 32,
+     "generation_tps": 8.1
+    }
+   }
+  },
+  {
+   "type": "tool_result",
+   "content": "README.rst\nabsolute_url_overrides\nadmin_autodiscover\nadmin_changelist\nadmin_checks\nadmin_custom_urls\nadmin_default_site\nadmin_docs\nadmin_filters\nadmin_inlines\nadmin_ordering\nadmin_registration\nadmin_scripts\nadmin_utils\nadmin_views\n\n\u22ef (193 more lines) \u22ef\nuser_commands\nutils_tests\nvalidation\nvalidators\nversion\nview_tests\nwsgi\nxor_lookups\n\n[Command succeeded with exit code 0]",
+   "metadata": {
+    "name": "execute",
+    "tool_call_id": "call_f77ad426",
+    "output_lines": 218,
+    "output_truncated": true
+   }
+  },
+  {
+   "type": "tool_call",
+   "content": "edit_file",
+   "metadata": {
+    "args": {
+     "file_path": "/links/django__django-16667/.swe/scratch/repro_overflow.py",
+     "new_string": "\"\"\"Reproduce the OverflowError in SelectDateWidget.value_from_datadict.\"\"\"\nimport os, sys\n\n# Minimal setup - just need Django config for the widget\nimport django\nfrom django.conf import settings\nif not settings.configured:\n    settings.configure(\n        DATE_INPUT_FORMATS=['%m/%d/%Y'],\n        USE_I18N=False,\n        USE_L10N=False,\n    )\ndjango.setup()\n\nfrom django.forms.widgets import SelectDateWidget\n\nwidget = SelectDateWidget()\n\n# This should NOT raise OverflowError\ndata = {\n    'my_date_day': '1',\n    'my_date_month': '1',\n    'my_date_year': '1234567821345678',  # larger than sys.maxsize\n}\n\ntry:\n    result = widget.value_from_datadict(data, {}, 'my_date')\n    print(f\"Result: {result}\")\n    print(\"SUCCESS: No OverflowError raised\")\nexcept OverflowError as e:\n    print(f\"FAILURE: OverflowError raised: {e}\")\n    sys.exit(1)",
+     "old_string": "\"\"\"Reproduce the OverflowError in SelectDateWidget.value_from_datadict.\"\"\"\nimport os, sys\nos.environ.setdefault('DJANGO_SETTINGS_MODULE', 'tests.settings')\n\nimport django\ndjango.setup()\n\nfrom django.forms.widgets import SelectDateWidget\n\nwidget = SelectDateWidget()\n\n# This should NOT raise OverflowError\ndata = {\n    'my_date_day': '1',\n    'my_date_month': '1',\n    'my_date_year': '1234567821345678',  # larger than sys.maxsize\n}\n\ntry:\n    result = widget.value_from_datadict(data, {}, 'my_date')\n    print(f\"Result: {result}\")\n    print(\"SUCCESS: No OverflowError raised\")\nexcept OverflowError as e:\n    print(f\"FAILURE: OverflowError raised: {e}\")\n    sys.exit(1)",
+     "replace_all": false
+    },
+    "tool_call_id": "call_872cb11a",
+    "stats": {
+     "tokens_from_cache": 14336,
+     "tokens_prefilled": 820,
+     "cache_hit_ratio": 0.946,
+     "prompt_tps": 13260.6,
+     "generation_tokens": 519,
+     "generation_tps": 8.0
+    }
+   }
+  },
+  {
+   "type": "tool_result",
+   "content": "Successfully replaced 1 instance(s) of the string in '/links/django__django-16667/.swe/scratch/repro_overflow.py'",
+   "metadata": {
+    "name": "edit_file",
+    "tool_call_id": "call_872cb11a"
+   }
+  },
+  {
+   "type": "tool_call",
+   "content": "execute",
+   "metadata": {
+    "args": {
+     "command": "./.swe/run 'python .swe/scratch/repro_overflow.py'"
+    },
+    "tool_call_id": "call_4e1c5fe8",
+    "stats": {
+     "tokens_from_cache": 14336,
+     "tokens_prefilled": 1390,
+     "cache_hit_ratio": 0.912,
+     "prompt_tps": 10015.0,
+     "generation_tokens": 40,
+     "generation_tps": 8.1
+    }
+   }
+  },
+  {
+   "type": "tool_result",
+   "content": "FAILURE: OverflowError raised: signed integer is greater than maximum\n\nExit code: 1\n[Command failed with exit code 1]",
+   "metadata": {
+    "name": "execute",
+    "tool_call_id": "call_4e1c5fe8",
+    "output_lines": 4,
+    "output_truncated": false
+   }
+  },
+  {
+   "type": "agent",
+   "content": "Reproduction confirmed. Now apply the fix \u2014 add `OverflowError` to the exception handler:"
+  },
+  {
+   "type": "tool_call",
+   "content": "edit_file",
+   "metadata": {
+    "args": {
+     "file_path": "/links/django__django-16667/django/forms/widgets.py",
+     "new_string": "            except (ValueError, OverflowError):",
+     "old_string": "            except ValueError:",
+     "replace_all": false
+    },
+    "tool_call_id": "call_6ec1d6d3",
+    "stats": {
+     "tokens_from_cache": 14336,
+     "tokens_prefilled": 1476,
+     "cache_hit_ratio": 0.907,
+     "prompt_tps": 10461.0,
+     "generation_tokens": 111,
+     "generation_tps": 7.9
+    }
+   }
+  },
+  {
+   "type": "tool_result",
+   "content": "Error: String '            except ValueError:' appears 2 times in file. Use replace_all=True to replace all instances, or provide a more specific string with surrounding context.",
+   "metadata": {
+    "name": "edit_file",
+    "tool_call_id": "call_6ec1d6d3"
+   }
+  },
+  {
+   "type": "tool_call",
+   "content": "edit_file",
+   "metadata": {
+    "args": {
+     "file_path": "/links/django__django-16667/django/forms/widgets.py",
+     "new_string": "            try:\n                date_value = datetime.date(int(y), int(m), int(d))\n            except (ValueError, OverflowError):\n                # Return pseudo-ISO dates with zeros for any unselected values,\n                # e.g. '2017-0-23'.\n                return \"%s-%s-%s\" % (y or 0, m or 0, d or 0)",
+     "old_string": "            try:\n                date_value = datetime.date(int(y), int(m), int(d))\n            except ValueError:\n                # Return pseudo-ISO dates with zeros for any unselected values,\n                # e.g. '2017-0-23'.\n                return \"%s-%s-%s\" % (y or 0, m or 0, d or 0)",
+     "replace_all": false
+    },
+    "tool_call_id": "call_18e67272",
+    "stats": {
+     "tokens_from_cache": 14336,
+     "tokens_prefilled": 1639,
+     "cache_hit_ratio": 0.897,
+     "prompt_tps": 9202.1,
+     "generation_tokens": 251,
+     "generation_tps": 7.8
+    }
+   }
+  },
+  {
+   "type": "tool_result",
+   "content": "Successfully replaced 1 instance(s) of the string in '/links/django__django-16667/django/forms/widgets.py'",
+   "metadata": {
+    "name": "edit_file",
+    "tool_call_id": "call_18e67272"
+   }
+  },
+  {
+   "type": "agent",
+   "content": "Now verify the fix:"
+  },
+  {
+   "type": "tool_call",
+   "content": "execute",
+   "metadata": {
+    "args": {
+     "command": "./.swe/run 'python .swe/scratch/repro_overflow.py'"
+    },
+    "tool_call_id": "call_2d6dde96",
+    "stats": {
+     "tokens_from_cache": 14336,
+     "tokens_prefilled": 1937,
+     "cache_hit_ratio": 0.881,
+     "prompt_tps": 9552.3,
+     "generation_tokens": 46,
+     "generation_tps": 7.0
+    }
+   }
+  },
+  {
+   "type": "tool_result",
+   "content": "Result: 1234567821345678-1-1\nSUCCESS: No OverflowError raised\n\n[Command succeeded with exit code 0]",
+   "metadata": {
+    "name": "execute",
+    "tool_call_id": "call_2d6dde96",
+    "output_lines": 4,
+    "output_truncated": false
+   }
+  },
+  {
+   "type": "agent",
+   "content": "Fix works. Now run the existing SelectDateWidget tests:"
+  },
+  {
+   "type": "tool_call",
+   "content": "execute",
+   "metadata": {
+    "args": {
+     "command": "./.swe/run 'python ./tests/runtests.py --verbosity 2 forms_tests.widget_tests.test_selectdatewidget'"
+    },
+    "tool_call_id": "call_d6537edb",
+    "stats": {
+     "tokens_from_cache": 14336,
+     "tokens_prefilled": 2041,
+     "cache_hit_ratio": 0.875,
+     "prompt_tps": 6065.1,
+     "generation_tokens": 61,
+     "generation_tps": 8.9
+    }
+   }
+  },
+  {
+   "type": "tool_result",
+   "content": "Testing against Django installed in '/testbed/django' with up to 18 processes\nImporting application forms_tests\nFound 15 test(s).\nSkipping setup of unused database(s): default, other.\nSystem check identified no issues (0 silenced).\ntest_custom_input_format (forms_tests.widget_tests.test_selectdatewidget.SelectDateWidgetTest.test_custom_input_format) ... ok\ntest_custom_months (forms_tests.widget_tests.test_selectdatewidget.SelectDateWidgetTest.test_custom_months) ... ok\ntest_fieldset (forms_tests.widget_tests.test_selectdatewidget.SelectDateWidgetTest.test_fieldset) ... ok\ntest_format_value (forms_tests.widget_tests.test_selectdatewidget.SelectDateWidgetTest.test_format_value) ... ok\ntest_l10n (forms_tests.widget_tests.test_selectdatewidget.SelectDateWidgetTest.test_l10n) ... ok\ntest_render_datetime (forms_tests.widget_tests.test_selectdatewidget.SelectDateWidgetTest.test_render_datetime) ... ok\ntest_render_empty (forms_tests.widget_tests.test_selectdatewidget.SelectDateWidgetTest.test_render_empty) ... ok\ntest_render_invalid_date (forms_tests.widget_tests.test_selectdatewidget.SelectDateWidgetTest.test_render_invalid_date)\nInvalid dates should still render the failed date. ... ok\ntest_render_none (forms_tests.widget_tests.test_selectdatewidget.SelectDateWidgetTest.test_render_none)\n\n\u22ef (4 more lines) \u22ef\ntest_value_from_datadict (forms_tests.widget_tests.test_selectdatewidget.SelectDateWidgetTest.test_value_from_datadict) ... ok\ntest_value_omitted_from_data (forms_tests.widget_tests.test_selectdatewidget.SelectDateWidgetTest.test_value_omitted_from_data) ... ok\ntest_years_rendered_without_separator (forms_tests.widget_tests.test_selectdatewidget.SelectDateWidgetTest.test_years_rendered_without_separator) ... ok\n\n----------------------------------------------------------------------\nRan 15 tests in 0.079s\n\nOK\n\n[Command succeeded with exit code 0]",
+   "metadata": {
+    "name": "execute",
+    "tool_call_id": "call_d6537edb",
+    "output_lines": 29,
+    "output_truncated": true
+   }
+  },
+  {
+   "type": "agent",
+   "content": "All 15 tests pass. Let me also run the DateField tests that use SelectDateWidget:"
+  },
+  {
+   "type": "tool_call",
+   "content": "execute",
+   "metadata": {
+    "args": {
+     "command": "./.swe/run 'python ./tests/runtests.py --verbosity 2 forms_tests.field_tests.test_datefield'"
+    },
+    "tool_call_id": "call_cef93c8d",
+    "stats": {
+     "tokens_from_cache": 16384,
+     "tokens_prefilled": 557,
+     "cache_hit_ratio": 0.967,
+     "prompt_tps": 14996.4,
+     "generation_tokens": 69,
+     "generation_tps": 9.3
+    }
+   }
+  },
+  {
+   "type": "tool_result",
+   "content": "Testing against Django installed in '/testbed/django' with up to 18 processes\nImporting application forms_tests\nFound 11 test(s).\nSkipping setup of unused database(s): default, other.\nSystem check identified no issues (0 silenced).\ntest_datefield_1 (forms_tests.field_tests.test_datefield.DateFieldTest.test_datefield_1) ... ok\ntest_datefield_2 (forms_tests.field_tests.test_datefield.DateFieldTest.test_datefield_2) ... ok\ntest_datefield_3 (forms_tests.field_tests.test_datefield.DateFieldTest.test_datefield_3) ... ok\ntest_datefield_4 (forms_tests.field_tests.test_datefield.DateFieldTest.test_datefield_4) ... ok\ntest_datefield_5 (forms_tests.field_tests.test_datefield.DateFieldTest.test_datefield_5) ... ok\ntest_datefield_changed (forms_tests.field_tests.test_datefield.DateFieldTest.test_datefield_changed) ... ok\ntest_datefield_strptime (forms_tests.field_tests.test_datefield.DateFieldTest.test_datefield_strptime)\nfield.strptime() doesn't raise a UnicodeEncodeError (#16123) ... ok\ntest_form_field (forms_tests.field_tests.test_datefield.DateFieldTest.test_form_field) ... ok\ntest_form_label_association (forms_tests.field_tests.test_datefield.DateFieldTest.test_form_label_association) ... ok\ntest_l10n_date_changed (forms_tests.field_tests.test_datefield.DateFieldTest.test_l10n_date_changed)\nDateField.has_changed() with SelectDateWidget works with a localized ... ok\ntest_l10n_invalid_date_in (forms_tests.field_tests.test_datefield.DateFieldTest.test_l10n_invalid_date_in) ... ok\n\n----------------------------------------------------------------------\nRan 11 tests in 0.026s\n\nOK\n\n[Command succeeded with exit code 0]",
+   "metadata": {
+    "name": "execute",
+    "tool_call_id": "call_cef93c8d",
+    "output_lines": 25,
+    "output_truncated": false
+   }
+  },
+  {
+   "type": "agent",
+   "content": "All tests pass. Let me verify the final diff:"
+  },
+  {
+   "type": "tool_call",
+   "content": "execute",
+   "metadata": {
+    "args": {
+     "command": "cd /links/django__django-16667 && git diff django/forms/widgets.py"
+    },
+    "tool_call_id": "call_26048a3e",
+    "stats": {
+     "tokens_from_cache": 16384,
+     "tokens_prefilled": 1027,
+     "cache_hit_ratio": 0.941,
+     "prompt_tps": 15179.6,
+     "generation_tokens": 56,
+     "generation_tps": 9.2
+    }
+   }
+  },
+  {
+   "type": "tool_result",
+   "content": "/bin/sh: line 0: cd: /links/django__django-16667: No such file or directory\n\nExit code: 1\n[Command failed with exit code 1]",
+   "metadata": {
+    "name": "execute",
+    "tool_call_id": "call_26048a3e",
+    "output_lines": 4,
+    "output_truncated": false
+   }
+  },
+  {
+   "type": "tool_call",
+   "content": "execute",
+   "metadata": {
+    "args": {
+     "command": "git diff django/forms/widgets.py"
+    },
+    "tool_call_id": "call_64e110d9",
+    "stats": {
+     "tokens_from_cache": 16384,
+     "tokens_prefilled": 1144,
+     "cache_hit_ratio": 0.935,
+     "prompt_tps": 13302.9,
+     "generation_tokens": 30,
+     "generation_tps": 9.9
+    }
+   }
+  },
+  {
+   "type": "tool_result",
+   "content": "diff --git a/django/forms/widgets.py b/django/forms/widgets.py\nindex 842b73e..f4bc74b 100644\n--- a/django/forms/widgets.py\n+++ b/django/forms/widgets.py\n@@ -1157,7 +1157,7 @@ class SelectDateWidget(Widget):\n             input_format = formats.sanitize_strftime_format(input_format)\n             try:\n                 date_value = datetime.date(int(y), int(m), int(d))\n-            except ValueError:\n+            except (ValueError, OverflowError):\n                 # Return pseudo-ISO dates with zeros for any unselected values,\n                 # e.g. '2017-0-23'.\n                 return \"%s-%s-%s\" % (y or 0, m or 0, d or 0)\n\n[Command succeeded with exit code 0]",
+   "metadata": {
+    "name": "execute",
+    "tool_call_id": "call_64e110d9",
+    "output_lines": 15,
+    "output_truncated": false
+   }
+  },
+  {
+   "type": "agent",
+   "content": "**Root cause:** In `SelectDateWidget.value_from_datadict` (line 1159 of `django/forms/widgets.py`), user-controlled year/month/day values are passed to `datetime.date(int(y), int(m), int(d))`. The `try/except` block only caught `ValueError`, but when the integers exceed `sys.maxsize`, `datetime.date()` raises an `OverflowError` instead. This caused a server crash (500 Internal Server Error) rather than graceful handling.\n\n**Fix:** Added `OverflowError` to the existing exception handler on line 1160, changing `except ValueError:` to `except (ValueError, OverflowError):`. This ensures that oversized integers are handled the same way as invalid dates \u2014 returning a pseudo-ISO date string with zeros for unselected parts, which then gets caught by form validation as an invalid date.",
+   "metadata": {
+    "stats": {
+     "tokens_from_cache": 16384,
+     "tokens_prefilled": 1392,
+     "cache_hit_ratio": 0.922,
+     "prompt_tps": 13401.7,
+     "generation_tokens": 183,
+     "generation_tps": 9.4
+    }
+   }
+  },
+  {
+   "type": "agent",
+   "content": "Project check after this turn:\n\n$ ruff check .\n/bin/sh: ruff: command not found\nexit 127"
+  }
+ ],
+ "seconds": 1221.7,
+ "patch_chars": 629
+}
